@@ -1,0 +1,587 @@
+        <!DOCTYPE html>
+        <html>
+
+        <head>
+            <title>Heart Attack Detection System</title>
+            <style>
+                body {
+                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                    background-color: #f5f5f5;
+                    margin: 0;
+                    padding: 20px;
+                    color: #333;
+                }
+
+                h1{
+                    display: flex;
+                    justify-content: center;
+                }
+
+                .dashboard {
+                    max-width: 1200px;
+                    margin: 0 auto;
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 20px;
+                }
+
+                .card {
+                    background: white;
+                    border-radius: 10px;
+                    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+                    padding: 20px;
+                    transition: transform 0.3s;
+                }
+
+                .card:hover {
+                    transform: translateY(-5px);
+                }
+
+                .card-header {
+                    font-size: 1.2em;
+                    font-weight: bold;
+                    margin-bottom: 15px;
+                    color: #2c3e50;
+                    border-bottom: 1px solid #eee;
+                    padding-bottom: 10px;
+                }
+
+                .vital-container {
+                    display: flex;
+                    justify-content: space-around;
+                    text-align: center;
+                    margin-bottom: 20px;
+                }
+
+                .vital {
+                    padding: 15px;
+                    border-radius: 8px;
+                    width: 30%;
+                }
+
+                .vital-value {
+                    font-size: 2.5em;
+                    font-weight: bold;
+                    margin: 10px 0;
+                }
+
+                .vital-label {
+                    font-size: 0.9em;
+                    color: #7f8c8d;
+                }
+
+                #bpm {
+                    background-color: #ffecec;
+                    color: #e74c3c;
+                }
+
+                #spo2 {
+                    background-color: #e8f4f8;
+                    color: #3498db;
+                }
+
+                #temp {
+                    background-color: #fff8e1;
+                    color: #f39c12;
+                }
+
+                .alert {
+                    background-color: #ffebee;
+                    color: #c62828;
+                    padding: 15px;
+                    border-radius: 8px;
+                    text-align: center;
+                    font-weight: bold;
+                    display: none;
+                    margin-bottom: 20px;
+                    animation: pulse 2s infinite;
+                }
+
+                @keyframes pulse {
+                    0% {
+                        opacity: 1;
+                    }
+
+                    50% {
+                        opacity: 0.7;
+                    }
+
+                    100% {
+                        opacity: 1;
+                    }
+                }
+
+                .chart-container {
+                    height: 300px;
+                    margin-top: 20px;
+                }
+
+                .threshold-controls {
+                    margin-top: 20px;
+                }
+
+                .slider-container {
+                    margin-bottom: 15px;
+                }
+
+                .slider-label {
+                    display: flex;
+                    justify-content: space-between;
+                    margin-bottom: 5px;
+                }
+
+                input[type="range"] {
+                    width: 100%;
+                    height: 10px;
+                    border-radius: 5px;
+                    background: #ddd;
+                    outline: none;
+                }
+
+                input[type="range"]::-webkit-slider-thumb {
+                    -webkit-appearance: none;
+                    width: 20px;
+                    height: 20px;
+                    border-radius: 50%;
+                    background: #3498db;
+                    cursor: pointer;
+                }
+
+                button {
+                    background-color: #3498db;
+                    color: white;
+                    border: none;
+                    padding: 10px 15px;
+                    border-radius: 5px;
+                    cursor: pointer;
+                    font-size: 1em;
+                    transition: background-color 0.3s;
+                }
+
+                button:hover {
+                    background-color: #2980b9;
+                }
+
+                .lead-alert {
+                    display: none;
+                    background-color: #fff3cd;
+                    color: #856404;
+                    padding: 10px 15px;
+                    border-radius: 5px;
+                    margin-bottom: 15px;
+                    align-items: center;
+                }
+
+                .ir-stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .ir-stats span {
+            background-color: #f8f9fa;
+            padding: 3px 8px;
+            border-radius: 4px;
+        }
+
+        #irChart {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        /* Add to your existing CSS */
+        .chart-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            align-items: center;
+        }
+
+        .chart-controls button {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            background-color: #e0e0e0;
+            cursor: pointer;
+            font-size: 0.8em;
+            transition: background-color 0.2s;
+        }
+
+        .chart-controls button:hover {
+            background-color: #d0d0d0;
+        }
+
+        .chart-controls button.btn-active {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .scale-info {
+            margin-left: auto;
+            font-size: 0.8em;
+            color: #666;
+        }
+
+            
+
+                @media (max-width: 768px) {
+                    .dashboard {
+                        grid-template-columns: 1fr;
+                    }
+                }
+            </style>
+            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@1.2.1/dist/chartjs-plugin-zoom.min.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>
+        </head>
+
+        <body>
+            <h1> Heart Attack Monitoring System</h1>
+            <div class="dashboard">
+                <div class="card">
+                    <div class="card-header">Vital Signs</div>
+                    <div class="vital-container">
+                        <div class="vital" id="bpm">
+                            <div class="vital-label">Heart Rate</div>
+                            <div class="vital-value" id="bpm-value">--</div>
+                            <div class="vital-unit">BPM</div>
+                        </div>
+                        <div class="vital" id="spo2">
+                            <div class="vital-label">Blood Oxygen</div>
+                            <div class="vital-value" id="spo2-value">--</div>
+                            <div class="vital-unit">% SpO2</div>
+                        </div>
+                        <div class="vital" id="temp">
+                            <div class="vital-label">Temperature</div>
+                            <div class="vital-value" id="temp-value">--</div>
+                            <div class="vital-unit">°C</div>
+                        </div>
+                    </div>
+                    <div class="alert" id="alert">
+                        WARNING: Possible Heart Attack Detected!
+                    </div>
+                    <div class="lead-alert" id="leadAlert">
+                        <span class="lead-alert-text">Electrode leads disconnected!</span>        </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">ECG Waveform (Auto-Scaled)</div>
+                    <div class="chart-container">
+                        <canvas id="ecgChart"></canvas>
+                    </div>
+                    <div class="chart-controls">
+                        <button id="autoScaleBtn" class="btn-active">Auto Scale</button>
+                        <button id="manualScaleBtn">Manual Scale (0-4095)</button>
+                        <span class="scale-info">Current scale: <span id="scaleInfo">Auto</span></span>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">Threshold Settings</div>
+                    <div class="threshold-controls">
+                        <div class="slider-container">
+                            <div class="slider-label">
+                                <span>High BPM Threshold: <span id="bpmHighValue">120</span></span>
+                            </div>
+                            <input type="range" min="80" max="200" value="120" class="slider" id="bpmHigh">
+                        </div>
+
+                        <div class="slider-container">
+                            <div class="slider-label">
+                                <span>Low BPM Threshold: <span id="bpmLowValue">50</span></span>
+                            </div>
+                            <input type="range" min="30" max="100" value="50" class="slider" id="bpmLow">
+                        </div>
+
+                        <div class="slider-container">
+                            <div class="slider-label">
+                                <span>SpO2 Threshold: <span id="spo2ThresholdValue">90</span>%</span>
+                            </div>
+                            <input type="range" min="70" max="100" value="90" class="slider" id="spo2Threshold">
+                        </div>
+
+                        <div class="slider-container">
+                            <div class="slider-label">
+                                <span>ECG Peak Threshold: <span id="ecgThresholdValue">1000</span></span>
+                            </div>
+                            <input type="range" min="500" max="2000" value="1000" class="slider" id="ecgThreshold">
+                        </div>
+
+                        <button id="saveThresholds">Save Thresholds</button>
+                    </div>
+                </div>
+                <!-- Add this card to your dashboard div -->
+                <div class="card">
+                    <div class="card-header">IR Sensor Waveform</div>
+                    <div class="chart-container">
+                        <canvas id="irChart"></canvas>
+                    </div>
+                    <div class="ir-stats">
+                        <span>Current: <span id="irValue">0</span></span>
+                        <span>Min: <span id="irMin">0</span></span>
+                        <span>Max: <span id="irMax">0</span></span>
+                    </div>
+                    </div>
+            </div>
+
+            <script>
+
+                // Initialize IR chart
+                    const irCtx = document.getElementById('irChart').getContext('2d');
+                    const irChart = new Chart(irCtx, {
+                        type: 'line',
+                        data: {
+                            labels: Array.from({ length: 200 }, (_, i) => i),
+                            datasets: [{
+                                label: 'IR Value',
+                                data: Array(200).fill(0),
+                                borderColor: 'rgb(255, 99, 132)',
+                                backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                                tension: 0.1,
+                                pointRadius: 0,
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: {
+                                    beginAtZero: false,
+                                    title: {
+                                        display: true,
+                                        text: 'IR Value'
+                                    },
+                                    ticks: {
+                                        callback: function (value) {
+                                            return value >= 1000 ? (value / 1000).toFixed(0) + 'k' : value;
+                                        }
+                                    }
+                                },
+                                x: {
+                                    display: false
+                                }
+                            },
+                            plugins: {
+                                legend: {
+                                    display: false
+                                },
+                                zoom: {
+                                    zoom: {
+                                        wheel: {
+                                            enabled: true
+                                        },
+                                        pinch: {
+                                            enabled: true
+                                        },
+                                        mode: 'xy'
+                                    }
+                                }
+                            }
+                        }
+                    });
+
+                
+            
+
+                // ECG Chart Initialization
+                const ECG_BUFFER_SIZE = 200;
+                    const ecgCtx = document.getElementById('ecgChart').getContext('2d');
+                    const ecgChart = new Chart(ecgCtx, {
+                        type: 'line',
+                        data: {
+                            labels: Array.from({ length: ECG_BUFFER_SIZE }, (_, i) => i),
+                            datasets: [{
+                                label: 'ECG Signal',
+                                data: Array(ECG_BUFFER_SIZE).fill(0),
+                                borderColor: 'rgba(75, 192, 192, 1)',
+                                borderWidth: 1,
+                                pointRadius: 0,
+                                tension: 0.1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            animation: {
+                                duration: 0
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: false,
+                                    title: {
+                                        display: true,
+                                        text: 'ECG Value'
+                                    }
+                                },
+                                x: {
+                                    display: false
+                                }
+                            },
+                            plugins: {
+                                legend: {
+                                    display: false
+                                },
+                                zoom: {
+                                    zoom: {
+                                        wheel: {
+                                            enabled: true
+                                        },
+                                        pinch: {
+                                            enabled: true
+                                        },
+                                        mode: 'xy'
+                                    },
+                                    pan: {
+                                        enabled: true,
+                                        mode: 'xy'
+                                    }
+                                }
+                            }
+                        }
+                    });
+
+                    // Auto-scaling variables
+                    let autoScaleEnabled = true;
+                    let manualMin = 0;
+                    let manualMax = 4095;
+
+                    // Update ECG data with auto-scaling
+                    function updateECGChart(data) {
+                        if (autoScaleEnabled) {
+                            // Calculate min/max with 10% padding
+                            const minVal = Math.min(...data);
+                            const maxVal = Math.max(...data);
+                            const range = maxVal - minVal;
+                            const padding = range * 0.1;
+
+                            ecgChart.options.scales.y.min = Math.max(0, minVal - padding);
+                            ecgChart.options.scales.y.max = maxVal + padding;
+                            document.getElementById('scaleInfo').textContent = `Auto (${Math.round(ecgChart.options.scales.y.min)}-${Math.round(ecgChart.options.scales.y.max)})`;
+                        } else {
+                            ecgChart.options.scales.y.min = manualMin;
+                            ecgChart.options.scales.y.max = manualMax;
+                            document.getElementById('scaleInfo').textContent = `Manual (${manualMin}-${manualMax})`;
+                        }
+
+                        // Update chart data
+                        ecgChart.data.datasets[0].data = data;
+                        ecgChart.update();
+                    }
+
+                    // Button event handlers
+                    document.getElementById('autoScaleBtn').addEventListener('click', function () {
+                        autoScaleEnabled = true;
+                        this.classList.add('btn-active');
+                        document.getElementById('manualScaleBtn').classList.remove('btn-active');
+                    });
+
+                    document.getElementById('manualScaleBtn').addEventListener('click', function () {
+                        autoScaleEnabled = false;
+                        this.classList.add('btn-active');
+                        document.getElementById('autoScaleBtn').classList.remove('btn-active');
+                        // Reset to full scale when switching to manual
+                        manualMin = 0;
+                        manualMax = 4095;
+                        ecgChart.options.scales.y.min = manualMin;
+                        ecgChart.options.scales.y.max = manualMax;
+                        document.getElementById('scaleInfo').textContent = `Manual (${manualMin}-${manualMax})`;
+                        ecgChart.update();
+                    });
+
+                // Update thresholds display
+                document.getElementById('bpmHigh').addEventListener('input', function () {
+                    document.getElementById('bpmHighValue').textContent = this.value;
+                });
+
+                document.getElementById('bpmLow').addEventListener('input', function () {
+                    document.getElementById('bpmLowValue').textContent = this.value;
+                });
+
+                document.getElementById('spo2Threshold').addEventListener('input', function () {
+                    document.getElementById('spo2ThresholdValue').textContent = this.value;
+                });
+
+                document.getElementById('ecgThreshold').addEventListener('input', function () {
+                    document.getElementById('ecgThresholdValue').textContent = this.value;
+                });
+
+                // Save thresholds
+                document.getElementById('saveThresholds').addEventListener('click', function () {
+                    const bpmHigh = document.getElementById('bpmHigh').value;
+                    const bpmLow = document.getElementById('bpmLow').value;
+                    const spo2Threshold = document.getElementById('spo2Threshold').value;
+                    const ecgThreshold = document.getElementById('ecgThreshold').value;
+
+                    const formData = new FormData();
+                    formData.append('bpmHigh', bpmHigh);
+                    formData.append('bpmLow', bpmLow);
+                    formData.append('spo2Threshold', spo2Threshold);
+                    formData.append('ecgThreshold', ecgThreshold);
+
+                    fetch('/setthreshold', {
+                        method: 'POST',
+                        body: new URLSearchParams(formData)
+                    }).then(response => {
+                        alert('Thresholds updated successfully');
+                    });
+                });
+
+                // Fetch data periodically
+                function fetchData() {
+                    fetch('/data')
+                        .then(response => response.json())
+                        .then(data => {
+                            document.getElementById('bpm-value').textContent = Math.round(data.bpm);
+                            document.getElementById('spo2-value').textContent = Math.round(data.spo2);
+                            document.getElementById('temp-value').textContent = data.temp.toFixed(1);
+
+                            if (data.leadsOff) {
+                                document.getElementById('leadAlert').style.display = 'flex';
+                            } else {
+                                document.getElementById('leadAlert').style.display = 'none';
+                            }
+                            if (data.alert) {
+                                document.getElementById('alert').style.display = 'block';
+                            } else {
+                                document.getElementById('alert').style.display = 'none';
+                            }
+                        });
+
+                        fetch('/irdata')
+                        .then(response => response.json())
+                        .then(data => {
+                            irChart.data.datasets[0].data = data;
+
+                            // Auto-scale Y axis
+                            const minVal = Math.min(...data);
+                            const maxVal = Math.max(...data);
+                            const padding = (maxVal - minVal) * 0.1;
+
+                            irChart.options.scales.y.min = Math.max(0, minVal - padding);
+                            irChart.options.scales.y.max = maxVal + padding;
+
+                            irChart.update();
+
+                            // Update stats
+                            const currentIR = data[data.length - 1];
+                            document.getElementById('irValue').textContent = currentIR.toLocaleString();
+                            document.getElementById('irMin').textContent = Math.min(...data).toLocaleString();
+                            document.getElementById('irMax').textContent = Math.max(...data).toLocaleString();
+                        });
+
+                        fetch('/ecgdata')
+                        .then(response => response.json())
+                        .then(data => {
+                            updateECGChart(data);
+                        });
+                }
+
+                setInterval(fetchData, 1000);
+                fetchData(); // Initial fetch
+            </script>
+        </body>
+
+        </html>
